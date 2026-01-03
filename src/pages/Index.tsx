@@ -5,10 +5,29 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { Calendar } from '@/components/ui/calendar';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [activeSection, setActiveSection] = useState('main');
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const { toast } = useToast();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    eventType: '',
+    preferredDate: '',
+    preferredTime: '',
+    message: ''
+  });
 
   const events = [
     { id: 1, date: '15 января', time: '10:00', title: 'Консультация: Кармический анализ', type: 'consultation', spots: 3 },
@@ -93,6 +112,32 @@ const Index = () => {
     element?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleBooking = (event?: any) => {
+    if (event) {
+      setSelectedEvent(event);
+      setFormData({ ...formData, eventType: event.title });
+    }
+    setIsBookingOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast({
+      title: 'Заявка отправлена!',
+      description: 'Мы свяжемся с вами в ближайшее время для подтверждения записи.',
+    });
+    setIsBookingOpen(false);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      eventType: '',
+      preferredDate: '',
+      preferredTime: '',
+      message: ''
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
       <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
@@ -130,10 +175,119 @@ const Index = () => {
               Откройте новые горизонты личностного роста, семейной гармонии и осознанного родительства
             </p>
             <div className="flex gap-4 justify-center">
-              <Button size="lg" className="group" onClick={() => scrollToSection('календарь')}>
-                Записаться на консультацию
-                <Icon name="ArrowRight" className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
-              </Button>
+              <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+                <DialogTrigger asChild>
+                  <Button size="lg" className="group" onClick={() => handleBooking()}>
+                    Записаться на консультацию
+                    <Icon name="ArrowRight" className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl">Запись на консультацию</DialogTitle>
+                    <DialogDescription>
+                      Заполните форму, и мы свяжемся с вами для подтверждения записи
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Имя *</Label>
+                      <Input
+                        id="name"
+                        placeholder="Ваше имя"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Телефон *</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+7 (999) 123-45-67"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="eventType">Тип мероприятия *</Label>
+                      <Select
+                        value={formData.eventType}
+                        onValueChange={(value) => setFormData({ ...formData, eventType: value })}
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите тип" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="consultation">Личная консультация</SelectItem>
+                          <SelectItem value="family">Семейная сессия</SelectItem>
+                          <SelectItem value="child">Работа с детьми</SelectItem>
+                          <SelectItem value="webinar">Вебинар</SelectItem>
+                          <SelectItem value="group">Групповое занятие</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="preferredDate">Желаемая дата</Label>
+                        <Input
+                          id="preferredDate"
+                          type="date"
+                          value={formData.preferredDate}
+                          onChange={(e) => setFormData({ ...formData, preferredDate: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="preferredTime">Желаемое время</Label>
+                        <Select
+                          value={formData.preferredTime}
+                          onValueChange={(value) => setFormData({ ...formData, preferredTime: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выберите" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="10:00">10:00</SelectItem>
+                            <SelectItem value="11:00">11:00</SelectItem>
+                            <SelectItem value="12:00">12:00</SelectItem>
+                            <SelectItem value="14:00">14:00</SelectItem>
+                            <SelectItem value="15:00">15:00</SelectItem>
+                            <SelectItem value="16:00">16:00</SelectItem>
+                            <SelectItem value="17:00">17:00</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="message">Дополнительная информация</Label>
+                      <Textarea
+                        id="message"
+                        placeholder="Расскажите о том, с чем хотели бы поработать"
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        rows={3}
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" size="lg">
+                      Отправить заявку
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
               <Button size="lg" variant="outline" onClick={() => scrollToSection('курсы')}>
                 Смотреть курсы
               </Button>
@@ -278,7 +432,7 @@ const Index = () => {
                             </span>
                           </CardDescription>
                         </div>
-                        <Button>Записаться</Button>
+                        <Button onClick={() => handleBooking(event)}>Записаться</Button>
                       </div>
                     </CardHeader>
                   </Card>
@@ -310,7 +464,7 @@ const Index = () => {
                                 <p className="font-medium">{event.title}</p>
                                 <p className="text-sm text-muted-foreground">{event.time}</p>
                               </div>
-                              <Button size="sm">Записаться</Button>
+                              <Button size="sm" onClick={() => handleBooking(event)}>Записаться</Button>
                             </div>
                           </div>
                         ))}
